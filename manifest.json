@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Youtube playlist exporter",
+  "description": "Allowing you to export your Youtube playlists into Excel with ease.",
+  "version": "1.0",
+  "host_permissions": ["https://www.youtube.com/*", "https://www.youtube.com/"],
+  "action": {
+    "default_icon": {
+      "16": "images/icon16.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
+    }
+  },
+  "permissions": ["scripting", "activeTab", "identity", "storage", "alarms"],
+  "icons": {
+    "16": "images/icon16.png",
+    "32": "images/icon32.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "js": ["scripts/content.js", "scripts/xlsx.full.min.js"],
+      "matches": ["https://youtube.com/*", "https://www.youtube.com/*"]
+    }
+  ],
+  "oauth2": {
+    "client_id": "650649576334-dngd1vk0hda7klm6g9n75bnusvhg2m5o.apps.googleusercontent.com",
+    "scopes": ["https://www.googleapis.com/auth/youtube.readonly"]
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}
