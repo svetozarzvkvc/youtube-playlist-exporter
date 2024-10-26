@@ -1,10 +1,10 @@
 window.onload = () => {
   chrome.runtime.sendMessage({
-    action: "getkeys",
+    action: "handleTokenStorage",
   });
 };
 
-function fetchData(playlistId) {
+function fetchData(playlistId,playlistName) {
   var currentLocation = window.location.href;
 
   chrome.storage.local.get("tokens", function (data) {
@@ -34,47 +34,75 @@ function fetchData(playlistId) {
           if (!overlay) {
             return;
           }
-          if (response.success) {
-            var successLocation = window.location.href;
-            if (currentLocation !== successLocation) {
-              return;
-            }
-            const result = response.data;
-            const dataNew = result.map((item, index) => ({
-              Id: index + 1,
-              Title: item.title,
-              Url: item.url,
-              "Date added": item.date,
-            }));
-            const ws = XLSX.utils.json_to_sheet(dataNew, {
-              header: ["Id", "Title", "Url", "Date added"],
-            });
+          if (response) {
+            if (response.success) {
+              var successLocation = window.location.href;
+              if (currentLocation !== successLocation) {
+                return;
+              }
+              const result = response.data;
+              const dataNew = result.map((item, index) => ({
+                Id: index + 1,
+                Title: item.title,
+                Url: item.url,
+                "Date added": item.date,
+              }));
+              const ws = XLSX.utils.json_to_sheet(dataNew, {
+                header: ["Id", "Title", "Url", "Date added"],
+              });
+              const date = new Date();
 
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-            XLSX.writeFile(wb, "data.xlsx");
+              const formattedDate = date.toISOString().split('T')[0];
+              const formattedTime = date.toTimeString().split(' ')[0].replace(/:/g, '-');
+              const fullFormatedDate = `${playlistName} ${formattedDate}_${formattedTime}`;
+              const wb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+              XLSX.writeFile(wb, `${fullFormatedDate}.xlsx`);
+            }
+          } else {
           }
         }
       );
+    } else {
+      var tekst = document.querySelector(".waittext");
+      tekst.textContent = "Unauthorized";
+      var elementi = document.querySelectorAll(".litag");
+      elementi.forEach((x) => {
+        x.parentNode.removeChild(x);
+      });
     }
   });
 }
 
+let navigating = false;
+
 function checkProgress() {
   let previousUrl = window.location.pathname;
+
   if (previousUrl == "/feed/playlists") {
     const navigationProgress = document.querySelector(
       "body > ytd-app > yt-page-navigation-progress"
     );
-    const currentValue = parseInt(navigationProgress.getAttribute("aria-valuenow"), 10);
+    const currentValue = parseInt(
+      navigationProgress.getAttribute("aria-valuenow"),
+      10
+    );
     if (currentValue === 100) {
       setTimeout(() => {
+        if (navigating) return;
+        navigating = true;
+        chrome.runtime.sendMessage({
+          action: "handleTokenStorage",
+        });
+        setTimeout(() => (navigating = false), 1000);
         refreshButtons();
       }, 1000);
     }
   }
 }
+
 navigation.addEventListener("navigate", (event) => {
+
   let previousUrl = window.location.pathname;
   const url = new URL(event.destination.url);
 
@@ -82,7 +110,6 @@ navigation.addEventListener("navigate", (event) => {
   if (overlay) {
     overlay.remove();
   }
-
   if (
     (url.pathname === "/feed/playlists" && previousUrl !== "/feed/playlists") ||
     (url.pathname === "/feed/playlists" && previousUrl === "/feed/playlists")
@@ -96,29 +123,30 @@ navigation.addEventListener("navigate", (event) => {
       observer.observe(navigationProgress, { attributes: true });
     }
   }
-  previousUrl = url.pathname;
 });
 
 function insertButtons() {
   var targetClass = "yt-lockup-view-model-wiz__metadata";
   const playlistElements = document.querySelectorAll(`.${targetClass}`);
   playlistElements.forEach((element) => {
-    if (
-      !element.textContent.includes("Watch later") &&
-      !element
-        .closest(".ytd-rich-item-renderer")
-        .querySelector(".yt-collection-thumbnail-view-model")
-        .textContent.includes("No videos")
-    ) {
+    var linInElement = element.querySelector("a");
+    var textElement = element
+      .closest(".ytd-rich-item-renderer")
+      .querySelector(".yt-collection-thumbnail-view-model");
+
+    var playlistId;
+    var playlistName;
+
+    if (linInElement) {
+      var linInElementHref = linInElement.href;
+      const parts = linInElementHref.split("list=");
+      playlistId = parts[1];
+      playlistName = linInElement.textContent;
+    }
+    if (textElement.textContent.match(/\d/) && !playlistId.includes("WL")) {
       const newContent = document.createElement("div");
       newContent.setAttribute("class", "excel-extension-buttons-added");
-      var linInElement = element.querySelector("a");
-      var playlistId;
-      if (linInElement) {
-        var linInElementHref = linInElement.href;
-        const parts = linInElementHref.split("list=");
-        playlistId = parts[1];
-      }
+
       newContent.style.width = "auto";
       const exportButton = document.createElement("button");
       exportButton.textContent = "Export";
@@ -132,20 +160,33 @@ function insertButtons() {
       exportHiddenField.setAttribute("class", "excel-extension-playlistId");
       exportHiddenField.setAttribute("value", playlistId);
 
+      var exportPlaylistName = document.createElement("input");
+
+      exportPlaylistName.setAttribute("type", "hidden");
+      exportPlaylistName.setAttribute("class", "excel-extension-playlistName");
+      exportPlaylistName.setAttribute("value", playlistName);
+
       newContent.appendChild(exportHiddenField);
+      newContent.appendChild(exportPlaylistName);
       newContent.appendChild(exportButton);
 
       exportButton.addEventListener("click", function () {
-
         var addedButtons = this.closest(".excel-extension-buttons-added");
 
-        var hiddenInput = addedButtons.querySelector(".excel-extension-playlistId");
+        var hiddenInput = addedButtons.querySelector(
+          ".excel-extension-playlistId"
+        );
+
+        var hiddenPlaylistName = addedButtons.querySelector(
+          ".excel-extension-playlistName"
+        );
 
         var playlistId = hiddenInput.value;
+        var playlistName = hiddenPlaylistName.value;
 
         addOverlay();
 
-        fetchData(playlistId);
+        fetchData(playlistId,playlistName);
       });
       addSlideButtonsListeners();
       element.insertAdjacentElement("afterend", newContent);
@@ -160,6 +201,7 @@ function onElementReady(querySelector, callBack) {
     setTimeout(() => onElementReady.call(this, ...arguments), 1000);
   }
 }
+
 onElementReady(".yt-lockup-view-model-wiz__metadata", () => {
   insertButtons();
 });
@@ -167,7 +209,9 @@ onElementReady(".yt-lockup-view-model-wiz__metadata", () => {
 function refreshButtons() {
   var targetClass = "yt-lockup-view-model-wiz__metadata";
   const playlistElements = document.querySelectorAll(`.${targetClass}`);
-  var buttons = this.document.querySelectorAll(".excel-extension-buttons-added");
+  var buttons = this.document.querySelectorAll(
+    ".excel-extension-buttons-added"
+  );
   var buttonArray = Array.from(buttons);
 
   if (buttonArray.length != playlistElements.length) {
@@ -175,6 +219,7 @@ function refreshButtons() {
     insertButtons();
   }
 }
+
 window.addEventListener("resize", function () {
   clearTimeout(window.resizeTimer);
   window.resizeTimer = setTimeout(refreshButtons, 1000);
@@ -252,6 +297,7 @@ function addOverlay() {
   var pTag = document.createElement("p");
   pTag.textContent = "Please wait";
   pTag.style.textAlign = "center";
+  pTag.className = "waittext";
 
   var span = document.createElement("span");
   span.style.position = "absolute";
@@ -262,6 +308,9 @@ function addOverlay() {
 
   var i1 = document.createElement("i");
   var i2 = document.createElement("i");
+
+  i1.className = "litag";
+  i2.className = "litag";
 
   i1.style.position = "absolute";
   i1.style.height = "4px";

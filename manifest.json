@@ -11,7 +11,7 @@
       "128": "images/icon128.png"
     }
   },
-  "permissions": ["scripting", "activeTab", "identity", "storage", "alarms"],
+  "permissions": ["identity", "storage"],
   "icons": {
     "16": "images/icon16.png",
     "32": "images/icon32.png",
@@ -30,5 +30,6 @@
   },
   "background": {
     "service_worker": "background.js"
-  }
+  },
+  "key":"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsa+W9KLN83NaR32idkWgO38IklCfQHScJL2IZmqDZGlain2QjHqCl5f/WnDKslpl4VAXXI6DvmSU27iXTv/lTs+ykzroTrQpw94LGAXdZ8TB8onWVTmNecZ3d3IrKEjUeZwTLfpX4l74Py2E1tHKQ1Tt7xylj61JWX2pw7tZxRqhi74iPmtVfT2h3Nu3csxwd4cD/EUcZ2J2cF96iRezCJl8wV66mT/6E/U4iNiF0tjMaJv+6TBm57IiY3UR9TqVhV5SdY3K6J7yQ2uoJffNN9mtLXWcUS74WlyLGKayIiC9djdqUBajjwcKocMJwdpLm7JM5t4er43exSFXrPDE7wIDAQAB"
 }
