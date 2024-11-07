@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "Exportron - YouTube Playlists Exporter",
+  "description": "Allowing you to export your YouTube playlists into Excel (.xlsx) with ease.",
+  "version": "1.0",
+  "action": {
+    "default_icon": {
+      "16": "images/icon16.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
+    }
+  },
+  "permissions": ["identity", "storage"],
+  "icons": {
+    "16": "images/icon16.png",
+    "32": "images/icon32.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "js": ["scripts/content.js", "scripts/xlsx.full.min.js"],
+      "matches": ["https://youtube.com/*", "https://www.youtube.com/*"],
+      "run_at": "document_start"
+    }
+  ],
+  "oauth2": {
+    "client_id": "650649576334-dngd1vk0hda7klm6g9n75bnusvhg2m5o.apps.googleusercontent.com",
+    "scopes": ["https://www.googleapis.com/auth/youtube.readonly"]
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "key":"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsa+W9KLN83NaR32idkWgO38IklCfQHScJL2IZmqDZGlain2QjHqCl5f/WnDKslpl4VAXXI6DvmSU27iXTv/lTs+ykzroTrQpw94LGAXdZ8TB8onWVTmNecZ3d3IrKEjUeZwTLfpX4l74Py2E1tHKQ1Tt7xylj61JWX2pw7tZxRqhi74iPmtVfT2h3Nu3csxwd4cD/EUcZ2J2cF96iRezCJl8wV66mT/6E/U4iNiF0tjMaJv+6TBm57IiY3UR9TqVhV5SdY3K6J7yQ2uoJffNN9mtLXWcUS74WlyLGKayIiC9djdqUBajjwcKocMJwdpLm7JM5t4er43exSFXrPDE7wIDAQAB"
+}
